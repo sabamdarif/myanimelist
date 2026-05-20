@@ -121,7 +121,10 @@
     var result = list.slice();
 
     // 1. Status Filter
-    if (currentFilters.status) {
+    if (
+      currentFilters.status === "watching" ||
+      currentFilters.status === "completed"
+    ) {
       result = result.filter(function (a) {
         if (!a.seasons || a.seasons.length === 0) {
           return false; // No data, don't show in watching/completed
@@ -174,9 +177,55 @@
         return aLang.includes(filterLang) || aLang === filterLang;
       });
     }
-    // 4. Sort
-    if (currentFilters.sort) {
+    // 4. Sort and Grouping
+    var isWatchingFirst = currentFilters.status === "watching_first";
+    var isCompletedFirst = currentFilters.status === "completed_first";
+    var isOvaFirst = currentFilters.attr.includes("ova_first");
+    var hasSort = !!currentFilters.sort;
+
+    if (isWatchingFirst || isCompletedFirst || isOvaFirst || hasSort) {
       result.sort(function (a, b) {
+        // Grouping: Status First
+        if (isWatchingFirst || isCompletedFirst) {
+          var getStatus = function (anime) {
+            if (!anime.seasons || anime.seasons.length === 0)
+              return { w: false, c: false };
+            var isW = false,
+              hasData = false;
+            for (var i = 0; i < anime.seasons.length; i++) {
+              var s = anime.seasons[i];
+              var tot = Number(s.total) || Number(s.total_episodes) || 0;
+              var wat = Number(s.watched) || Number(s.watched_episodes) || 0;
+              if (tot > 0 || wat > 0) hasData = true;
+              if (wat < tot || (tot === 0 && wat > 0)) isW = true;
+            }
+            return hasData ? { w: isW, c: !isW } : { w: false, c: false };
+          };
+          var stA = getStatus(a),
+            stB = getStatus(b);
+          if (isWatchingFirst) {
+            if (stA.w !== stB.w) return stA.w ? -1 : 1;
+          } else if (isCompletedFirst) {
+            if (stA.c !== stB.c) return stA.c ? -1 : 1;
+          }
+        }
+
+        // Grouping: OVA First
+        if (isOvaFirst) {
+          var hasOva = function (anime) {
+            if (!anime.seasons) return false;
+            for (var i = 0; i < anime.seasons.length; i++) {
+              var s = anime.seasons[i];
+              if (s.isOva || s.number % 1 !== 0) return true;
+            }
+            return false;
+          };
+          var ovaA = hasOva(a),
+            ovaB = hasOva(b);
+          if (ovaA !== ovaB) return ovaA ? -1 : 1;
+        }
+
+        // Base Sort
         if (currentFilters.sort === "az") {
           return (a.name || "").localeCompare(b.name || "");
         } else if (currentFilters.sort === "za") {
@@ -186,6 +235,7 @@
         } else if (currentFilters.sort === "rating_low") {
           return (parseFloat(a.stars) || 0) - (parseFloat(b.stars) || 0);
         }
+
         return 0;
       });
     }
