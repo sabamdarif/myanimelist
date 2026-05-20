@@ -259,6 +259,8 @@
   overflow: hidden;
   text-decoration: none;
   transition: transform 0.2s ease;
+  content-visibility: auto;
+  contain-intrinsic-size: 0 80px;
 }
 
 .trending_card:hover {

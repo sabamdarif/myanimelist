@@ -9,15 +9,39 @@
     <link href="{% static "core/css/header_dropdown.css" %}" rel="stylesheet">
     <link href="{% static "core/css/category_tabs.css" %}" rel="stylesheet">
     <link href="{% static "core/css/anime_table.css" %}" rel="stylesheet">
-    <link href="{% static "core/css/add_anime.css" %}?v=2" rel="stylesheet">
-    <link href="{% static "core/css/add_category.css" %}" rel="stylesheet">
-    <link href="{% static "core/css/fab.css" %}" rel="stylesheet">
     <link href="{% static "core/css/search.css" %}" rel="stylesheet">
-    <link href="{% static "core/css/share_modal.css" %}" rel="stylesheet">
-    <link href="{% static "core/css/import_export.css" %}" rel="stylesheet">
-    <link href="{% static "core/css/toast.css" %}" rel="stylesheet">
-    <link rel="stylesheet"
-          href="https://www.nerdfonts.com/assets/css/webfont.css">
+    <link rel="preload"
+          href="{% static "core/css/add_anime.css" %}?v=2"
+          as="style"
+          onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload"
+          href="{% static "core/css/add_category.css" %}"
+          as="style"
+          onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload"
+          href="{% static "core/css/fab.css" %}"
+          as="style"
+          onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload"
+          href="{% static "core/css/share_modal.css" %}"
+          as="style"
+          onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload"
+          href="{% static "core/css/import_export.css" %}"
+          as="style"
+          onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload"
+          href="{% static "core/css/toast.css" %}"
+          as="style"
+          onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link href="{% static "core/css/add_anime.css" %}?v=2" rel="stylesheet">
+        <link href="{% static "core/css/add_category.css" %}" rel="stylesheet">
+        <link href="{% static "core/css/fab.css" %}" rel="stylesheet">
+        <link href="{% static "core/css/share_modal.css" %}" rel="stylesheet">
+        <link href="{% static "core/css/import_export.css" %}" rel="stylesheet">
+        <link href="{% static "core/css/toast.css" %}" rel="stylesheet">
+    </noscript>
 {% endblock extra_css %}
 {% block body_content %}
     <div class="sticky_header">
@@ -28,7 +52,7 @@
                style="text-decoration: none;
                       color: inherit;
                       cursor: pointer">
-                <img src="{% static 'core/logo.png' %}"
+                <img src="{% static 'core/logo.webp' %}"
                      alt="{{ WEBSITE_NAME }}-logo"
                      id="header_web_logo">
                 <h2 id="header_web_title">{{ WEBSITE_NAME }}</h2>
@@ -224,21 +248,21 @@
 {% endblock body_content %}
 {% block scripts %}
     <script>window.__USER_IS_AUTHENTICATED__ = {{ user_is_authenticated|yesno:"true,false" }};</script>
-    <script src="{% static 'core/js/jwt_auth.js' %}"></script>
-    <script src="{% static 'core/js/sync_queue.js' %}"></script>
-    <script src="{% static 'core/js/header_dropdown.js' %}"></script>
-    <script src="{% static 'core/js/anime_renderer.js' %}"></script>
-    <script src="{% static 'core/js/anime_filter.js' %}"></script>
-    <script src="{% static 'core/js/anime_table.js' %}"></script>
-    <script src="{% static 'core/js/add_category_modal.js' %}"></script>
-    <script src="{% static 'core/js/anime_modal_base.js' %}"></script>
-    <script src="{% static 'core/js/add_anime_modal.js' %}"></script>
-    <script src="{% static 'core/js/edit_anime_modal.js' %}"></script>
-    <script src="{% static 'core/js/edit_category_modal.js' %}"></script>
-    <script src="{% static 'core/js/search.js' %}"></script>
-    <script src="{% static 'core/js/share_modal.js' %}"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-    <script src="{% static 'core/js/import_export.js' %}"></script>
+    <script defer src="{% static 'core/js/jwt_auth.js' %}"></script>
+    <script defer src="{% static 'core/js/sync_queue.js' %}"></script>
+    <script defer src="{% static 'core/js/header_dropdown.js' %}"></script>
+    <script defer src="{% static 'core/js/anime_renderer.js' %}"></script>
+    <script defer src="{% static 'core/js/anime_filter.js' %}"></script>
+    <script defer src="{% static 'core/js/anime_table.js' %}"></script>
+    <script defer src="{% static 'core/js/add_category_modal.js' %}"></script>
+    <script defer src="{% static 'core/js/anime_modal_base.js' %}"></script>
+    <script defer src="{% static 'core/js/add_anime_modal.js' %}"></script>
+    <script defer src="{% static 'core/js/edit_anime_modal.js' %}"></script>
+    <script defer src="{% static 'core/js/edit_category_modal.js' %}"></script>
+    <script defer src="{% static 'core/js/search.js' %}"></script>
+    <script defer src="{% static 'core/js/share_modal.js' %}"></script>
+    <!-- SheetJS loaded on-demand by import_export.js (saves ~500KB initial load) -->
+    <script defer src="{% static 'core/js/import_export.js' %}"></script>
     <script>
         // Mobile FAB toggle
         document.addEventListener('DOMContentLoaded', () => {

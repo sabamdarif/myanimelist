@@ -22,6 +22,8 @@
 .anime_table tbody tr {
   background: var(--surface);
   transition: background 0.12s ease;
+  content-visibility: auto;
+  contain-intrinsic-size: 0 110px;
 }
 
 .anime_table tbody tr:hover {
@@ -1108,4 +1110,3 @@
     font-size: 0.9rem;
   }
 }
-

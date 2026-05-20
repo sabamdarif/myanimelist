@@ -1,0 +1,61 @@
+/* Auto-generated Nerd Font icon subset — DO NOT EDIT */
+/* Contains only the 38 icons actually used in the app */
+
+@font-face {
+  font-family: 'NerdFontsSymbols Nerd Font';
+  src: url('../fonts/NerdFontsSubset.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+E27C, U+E27D, U+E68F, U+EA76, U+EA9C, U+EABF, U+EEC7, U+F005, U+F007, U+F00C, U+F00D, U+F013, U+F015, U+F040, U+F053, U+F054, U+F058, U+F067, U+F075, U+F07B, U+F090, U+F0B0, U+F0C5, U+F0D7, U+F110, U+F2BD, U+F44D, U+F012C, U+F0156, U+F018F, U+F01DA, U+F05D6, U+F063F, U+F082B, U+F09EE, U+F0A16, U+F0A4E, U+F11F4;
+}
+
+.nf, .nerd-font, .nerd-fonts {
+  font-family: 'NerdFontsSymbols Nerd Font';
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.nf-cod-arrow_right:before { content: "\ea9c"; }
+.nf-cod-clear_all:before { content: "\eabf"; }
+.nf-cod-close:before { content: "\ea76"; }
+.nf-fa-caret_down:before { content: "\f0d7"; }
+.nf-fa-check:before { content: "\f00c"; }
+.nf-fa-check_circle:before { content: "\f058"; }
+.nf-fa-chevron_left:before { content: "\f053"; }
+.nf-fa-chevron_right:before { content: "\f054"; }
+.nf-fa-circle_user:before { content: "\f2bd"; }
+.nf-fa-cog:before { content: "\f013"; }
+.nf-fa-comment:before { content: "\f075"; }
+.nf-fa-copy:before { content: "\f0c5"; }
+.nf-fa-filter:before { content: "\f0b0"; }
+.nf-fa-folder:before { content: "\f07b"; }
+.nf-fa-folder_plus:before { content: "\eec7"; }
+.nf-fa-home:before { content: "\f015"; }
+.nf-fa-pencil:before { content: "\f040"; }
+.nf-fa-plus:before { content: "\f067"; }
+.nf-fa-sign_in:before { content: "\f090"; }
+.nf-fa-spinner:before { content: "\f110"; }
+.nf-fa-star:before { content: "\f005"; }
+.nf-fa-times:before { content: "\f00d"; }
+.nf-fa-user:before { content: "\f007"; }
+.nf-fae-file_export:before { content: "\e27c"; }
+.nf-fae-file_import:before { content: "\e27d"; }
+.nf-md-alert_circle_outline:before { content: "\f05d6"; }
+.nf-md-check:before { content: "\f012c"; }
+.nf-md-close:before { content: "\f0156"; }
+.nf-md-cloud_sync:before { content: "\f063f"; }
+.nf-md-content_copy:before { content: "\f018f"; }
+.nf-md-download:before { content: "\f01da"; }
+.nf-md-file_document_outline:before { content: "\f09ee"; }
+.nf-md-file_upload_outline:before { content: "\f0a4e"; }
+.nf-md-image_off:before { content: "\f082b"; }
+.nf-md-share_all:before { content: "\f11f4"; }
+.nf-md-subtitles:before { content: "\f0a16"; }
+.nf-oct-plus:before { content: "\f44d"; }
+.nf-seti-search:before { content: "\e68f"; }

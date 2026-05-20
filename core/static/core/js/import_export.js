@@ -2,6 +2,35 @@
 (function () {
   "use strict";
 
+  var _xlsxReady = null;
+  function ensureXLSX() {
+    if (typeof XLSX !== "undefined") return Promise.resolve();
+    if (_xlsxReady) return _xlsxReady;
+    _xlsxReady = new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src =
+        "https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js";
+      s.onload = function () {
+        if (typeof XLSX !== "undefined") {
+          resolve();
+        } else {
+          _xlsxReady = null;
+          reject(new Error("SheetJS loaded but XLSX not defined"));
+        }
+      };
+      s.onerror = function () {
+        _xlsxReady = null;
+        reject(
+          new Error(
+            "Failed to load SheetJS library. Check your internet connection.",
+          ),
+        );
+      };
+      document.head.appendChild(s);
+    });
+    return _xlsxReady;
+  }
+
   /* ═══════════════════════════════════════════════════════════════════
      Helpers
      ═══════════════════════════════════════════════════════════════════ */
@@ -51,6 +80,9 @@
     setExportProgress(0);
 
     try {
+      // Load SheetJS on demand
+      await ensureXLSX();
+
       // 1. Fetch categories
       var catRes = await apiFetch("/api/v1/categories/", {
         credentials: "same-origin",
@@ -349,6 +381,9 @@
       if (importProgressWrapper) importProgressWrapper.classList.add("visible");
 
       try {
+        // Load SheetJS on demand
+        await ensureXLSX();
+
         // Read file
         var buffer = await _importFile.arrayBuffer();
         var wb = XLSX.read(new Uint8Array(buffer), { type: "array" });
@@ -450,7 +485,8 @@
 
             var seasonStr = row[1] != null ? String(row[1]) : "";
             var language = row[2] != null ? String(row[2]).trim() : "";
-            var stars = row[3] != null && row[3] !== "" ? parseFloat(row[3]) : null;
+            var stars =
+              row[3] != null && row[3] !== "" ? parseFloat(row[3]) : null;
             var thumbnailUrl = row[4] != null ? String(row[4]).trim() : "";
 
             var seasons = parseSeasons(seasonStr);
@@ -462,7 +498,7 @@
               language: language,
               stars: stars,
               seasons: seasons,
-              category_id: catId
+              category_id: catId,
             };
 
             var existing = animeByName[animeName];
@@ -470,12 +506,12 @@
               chunkActions.push({
                 type: "UPDATE",
                 id: existing.id,
-                data: payload
+                data: payload,
               });
             } else {
               chunkActions.push({
                 type: "CREATE",
-                data: payload
+                data: payload,
               });
             }
 
@@ -483,20 +519,25 @@
             updateProgress("Queuing: " + animeName);
 
             // Flush chunk if size reached or last item
-            if (chunkActions.length >= CHUNK_SIZE || ri === sheetInfo.rows.length - 1) {
-                if (chunkActions.length > 0) {
-                  updateProgress("Sending " + chunkActions.length + " items to cloud...");
-                  var bulkRes = await apiFetch("/api/v1/animes/bulk_sync/", {
-                    method: "POST",
-                    credentials: "same-origin",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ actions: chunkActions }),
-                  });
-                  if (!bulkRes.ok) {
-                    throw new Error("Bulk import chunk failed.");
-                  }
-                  chunkActions = [];
+            if (
+              chunkActions.length >= CHUNK_SIZE ||
+              ri === sheetInfo.rows.length - 1
+            ) {
+              if (chunkActions.length > 0) {
+                updateProgress(
+                  "Sending " + chunkActions.length + " items to cloud...",
+                );
+                var bulkRes = await apiFetch("/api/v1/animes/bulk_sync/", {
+                  method: "POST",
+                  credentials: "same-origin",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ actions: chunkActions }),
+                });
+                if (!bulkRes.ok) {
+                  throw new Error("Bulk import chunk failed.");
                 }
+                chunkActions = [];
+              }
             }
           }
         }

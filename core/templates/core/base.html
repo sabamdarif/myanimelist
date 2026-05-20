@@ -4,14 +4,24 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description"
+              content="Track, share, and manage your anime watching list with {{ WEBSITE_NAME }}. Organize by categories, track seasons, and share with friends.">
         <title>
             {% block page_title %}
                 {{ WEBSITE_NAME }}
             {% endblock page_title %}
         </title>
-        <link rel="icon" type="image/png" href="{% static "core/logo.png" %}">
+        <link rel="icon" type="image/webp" href="{% static "core/logo.webp" %}">
+        <link rel="preload"
+              href="{% static 'core/fonts/NerdFontsSubset.woff2' %}"
+              as="font"
+              type="font/woff2"
+              crossorigin>
+        <link rel="preconnect" href="https://api.jikan.moe" crossorigin>
+        <link rel="dns-prefetch" href="https://cdn.myanimelist.net">
         <link href="{% static "core/css/colors.css" %}" rel="stylesheet">
         <link href="{% static "core/css/base.css" %}" rel="stylesheet">
+        <link href="{% static "core/css/nerd_icons.css" %}" rel="stylesheet">
         {% block extra_css %}
         {% endblock extra_css %}
     </head>

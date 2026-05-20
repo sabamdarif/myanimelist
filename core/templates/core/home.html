@@ -6,8 +6,6 @@
 {% block extra_css %}
     <link href="{% static 'core/css/home.css' %}" rel="stylesheet">
     <link href="{% static 'core/css/header.css' %}" rel="stylesheet">
-    <link rel="stylesheet"
-          href="https://www.nerdfonts.com/assets/css/webfont.css">
 {% endblock extra_css %}
 {% block body_content %}
     <div class="sticky_header">
@@ -18,7 +16,7 @@
                style="text-decoration: none;
                       color: inherit;
                       cursor: pointer">
-                <img src="{% static 'core/logo.png' %}"
+                <img src="{% static 'core/logo.webp' %}"
                      alt="{{ WEBSITE_NAME }}-logo"
                      id="header_web_logo">
                 <h2 id="header_web_title">{{ WEBSITE_NAME }}</h2>
@@ -139,6 +137,6 @@
         window.__USER_IS_AUTHENTICATED__ = {{ user_is_authenticated|yesno:"true,false" }};
         window.__USER_EMAIL_VERIFIED__ = {{ user_email_verified|yesno:"true,false" }};
     </script>
-    <script src="{% static 'core/js/jwt_auth.js' %}"></script>
-    <script src="{% static 'core/js/home.js' %}"></script>
+    <script defer src="{% static 'core/js/jwt_auth.js' %}"></script>
+    <script defer src="{% static 'core/js/home.js' %}"></script>
 {% endblock scripts %}
