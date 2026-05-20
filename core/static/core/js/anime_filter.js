@@ -123,20 +123,31 @@
     // 1. Status Filter
     if (currentFilters.status) {
       result = result.filter(function (a) {
-        var isWatching = false;
         if (!a.seasons || a.seasons.length === 0) {
-          isWatching = true; // No seasons -> assumed watching
-        } else {
-          for (var i = 0; i < a.seasons.length; i++) {
-            var s = a.seasons[i];
-            var total = Number(s.total) || Number(s.total_episodes) || 0;
-            var watched = Number(s.watched) || Number(s.watched_episodes) || 0;
-            if (watched < total || total === 0) {
-              isWatching = true;
-              break;
-            }
+          return false; // No data, don't show in watching/completed
+        }
+
+        var isWatching = false;
+        var hasValidData = false;
+
+        for (var i = 0; i < a.seasons.length; i++) {
+          var s = a.seasons[i];
+          var total = Number(s.total) || Number(s.total_episodes) || 0;
+          var watched = Number(s.watched) || Number(s.watched_episodes) || 0;
+
+          if (total > 0 || watched > 0) {
+            hasValidData = true;
+          }
+
+          if (watched < total || (total === 0 && watched > 0)) {
+            isWatching = true;
           }
         }
+
+        if (!hasValidData) {
+          return false; // All seasons are 0/0, don't show in watching/completed
+        }
+
         if (currentFilters.status === "watching") return isWatching;
         if (currentFilters.status === "completed") return !isWatching;
         return true;
