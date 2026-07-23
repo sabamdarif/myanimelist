@@ -194,7 +194,7 @@ export function AnimeTable({
               <th className="col_season">Season</th>
               <th className="col_lang">Language</th>
               <th className="col_stars">Stars</th>
-              <th className="col_edit"></th>
+              {!readOnly && <th className="col_edit"></th>}
               <th
                 className="col_filter_anchor"
                 style={{
@@ -213,16 +213,16 @@ export function AnimeTable({
           </thead>
           <tbody id="anime_table_body">
             {animes === "loading" ? (
-              <SkeletonRows rows={4} />
+              <SkeletonRows rows={4} readOnly={readOnly} />
             ) : animes === "error" ? (
               <tr>
-                <td colSpan={COL_SPAN} className="empty_msg">
+                <td colSpan={colSpan} className="empty_msg">
                   Failed to load anime.
                 </td>
               </tr>
             ) : animes.length === 0 ? (
               <tr>
-                <td colSpan={COL_SPAN} className="empty_msg">
+                <td colSpan={colSpan} className="empty_msg">
                   {emptyMessage}
                 </td>
               </tr>
@@ -236,6 +236,7 @@ export function AnimeTable({
                   onThumbLoaded={onThumbLoaded}
                   dragDisabled={disabled}
                   onEdit={onEdit}
+                  readOnly={readOnly}
                 />
               ))
             )}

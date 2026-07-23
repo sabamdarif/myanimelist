@@ -45,11 +45,11 @@
 - [x] Optimistic mutations + debounced bulk_sync queue (localStorage, keepalive flush)
 - [x] Toasts
 
-## Phase 7 — Secondary pages ⬜
-- [ ] Landing page (schedules/trending/upcoming, hover popup, add-to-list)
-- [ ] Share modal (enable/disable, copy link)
-- [ ] Public share page `/share/[token]` (read-only table, copy-list flow)
-- [ ] ODS import/export (lazy SheetJS, export ring, import modal)
+## Phase 7 — Secondary pages ✅
+- [x] Landing page (schedules/trending/upcoming, hover popup, add-to-list)
+- [x] Share modal (enable/disable, copy link)
+- [x] Public share page `/share/[token]` (read-only table, copy-list flow)
+- [x] ODS import/export (lazy SheetJS, export ring, import modal)
 
 ## Phase 8 — Tests + CI ⬜
 - [ ] Backend pytest suite green

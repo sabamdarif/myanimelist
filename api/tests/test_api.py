@@ -265,6 +265,7 @@ def test_share_enable_data_etag_disable(client, user, anon_client):
     assert first.status_code == 200
     assert first.json()[0]["animes"][0]["name"] == "Naruto"
     assert first["Cache-Control"] == "public, max-age=60"
+    assert first["X-Share-Owner"]  # owner display name for the share page header
     etag = first["ETag"]
 
     assert anon_client.get(data_url, HTTP_IF_NONE_MATCH=etag).status_code == 304

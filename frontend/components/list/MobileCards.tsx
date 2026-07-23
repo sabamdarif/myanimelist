@@ -49,12 +49,14 @@ function SortableCard({
   onThumbLoaded,
   dragDisabled,
   onEdit,
+  readOnly,
 }: {
   a: Anime;
   categoryId: number | null;
   onThumbLoaded: (animeId: number | string, thumbUrl: string) => void;
   dragDisabled: boolean;
   onEdit?: (a: Anime) => void;
+  readOnly: boolean;
 }) {
   const {
     attributes,
@@ -86,7 +88,7 @@ function SortableCard({
         animeId={a.id}
         categoryId={categoryId}
         onLoaded={onThumbLoaded}
-        showLoadBtn
+        showLoadBtn={!readOnly}
       />
       <div className="m_card_body">
         <h3 className="m_card_title">{a.name}</h3>
@@ -103,17 +105,19 @@ function SortableCard({
             </span>{" "}
             {rating.toFixed(1)}
           </span>
-          <button
-            className="edit_btn"
-            title="Edit"
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit?.(a);
-            }}
-          >
-            <i className="nf nf-fa-pencil"></i>
-          </button>
+          {!readOnly && (
+            <button
+              className="edit_btn"
+              title="Edit"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit?.(a);
+              }}
+            >
+              <i className="nf nf-fa-pencil"></i>
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -128,6 +132,7 @@ export function MobileCards({
   onReorder,
   dragDisabled = false,
   onEdit,
+  readOnly = false,
 }: {
   animes: Anime[] | "loading" | "error";
   categoryId: number | null;
@@ -136,6 +141,7 @@ export function MobileCards({
   onReorder?: (ordered: Anime[]) => void;
   dragDisabled?: boolean;
   onEdit?: (a: Anime) => void;
+  readOnly?: boolean;
 }) {
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -182,6 +188,7 @@ export function MobileCards({
                 onThumbLoaded={onThumbLoaded}
                 dragDisabled={disabled}
                 onEdit={onEdit}
+                readOnly={readOnly}
               />
             ))
           )}
