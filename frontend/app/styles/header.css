@@ -1,0 +1,153 @@
+#header_web_logo {
+  height: 34px;
+  width: auto;
+}
+
+header {
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 12px;
+  gap: 12px;
+  position: relative;
+  z-index: 100;
+}
+
+.sticky_header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+#header_title_section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+#header_web_title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.5px;
+}
+
+#header_search_section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 9px 10px;
+  flex: 1;
+  max-width: 400px;
+  margin: 0 16px;
+}
+
+#header_search_section input {
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 0.85rem;
+  width: 100%;
+}
+
+#header_search_section input::placeholder {
+  color: var(--text-muted);
+}
+
+#header_action_buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.header_action_buttons {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 16px;
+  border-radius: var(--radius);
+  border: none;
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    filter 0.15s ease,
+    background 0.15s ease;
+}
+
+.header_action_buttons:hover {
+  filter: brightness(0.92);
+}
+
+.btn_category {
+  background: var(--primary-light);
+  color: var(--text);
+}
+
+.btn_add_anime {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 600;
+}
+
+.btn_add_anime:hover {
+  background: var(--accent2);
+  filter: none;
+}
+
+.btn_add_anime.btn_add_anime_disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+}
+
+.btn_add_anime.btn_add_anime_disabled:hover {
+  background: var(--accent);
+  filter: grayscale(0.5);
+}
+
+.m_header_search_btn {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  header {
+    padding: 8px 12px;
+  }
+
+  #header_search_section {
+    display: none;
+  }
+
+  .header_action_buttons {
+    display: none;
+  }
+
+  #header_action_buttons {
+    gap: 8px;
+  }
+
+  .m_header_search_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-size: 1.2rem;
+    cursor: pointer;
+  }
+}

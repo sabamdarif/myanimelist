@@ -1,0 +1,115 @@
+.m_fab {
+  display: none;
+}
+
+.m_fab_container {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .m_fab_container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: fixed;
+    bottom: 24px;
+    right: 20px;
+    z-index: 90;
+    gap: 12px;
+  }
+
+  .m_fab_option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border-radius: 26px;
+    border: none;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.82rem;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(20px) scale(0.8);
+    pointer-events: none;
+    transition:
+      opacity 0.2s ease,
+      transform 0.25s ease;
+  }
+
+  .m_fab_option i {
+    font-size: 0.7rem;
+    color: var(--accent);
+  }
+
+  .m_fab_option:hover {
+    background: var(--surface2);
+  }
+
+  .m_fab_open .m_fab_option.m_fab_option_disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    filter: grayscale(0.5);
+  }
+
+  .m_fab_open .m_fab_option.m_fab_option_disabled:hover {
+    background: var(--surface);
+  }
+
+  .m_fab_open .m_fab_option {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+
+  .m_fab_open .m_fab_option:nth-child(1) {
+    transition-delay: 0.08s;
+  }
+
+  .m_fab_open .m_fab_option:nth-child(2) {
+    transition-delay: 0.02s;
+  }
+
+  .m_fab_option:nth-child(1) {
+    transition-delay: 0s;
+  }
+
+  .m_fab_option:nth-child(2) {
+    transition-delay: 0.04s;
+  }
+
+  .m_fab_main {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: none;
+    background: var(--accent);
+    color: var(--accent-contrast);
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 45%, transparent);
+    cursor: pointer;
+    transition:
+      transform 0.35s ease,
+      box-shadow 0.15s ease;
+    flex-shrink: 0;
+  }
+
+  .m_fab_main:hover {
+    box-shadow: 0 6px 20px color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+
+  .m_fab_main i {
+    transition: transform 0.35s ease;
+    display: inline-block;
+  }
+
+  .m_fab_open .m_fab_main i {
+    transform: rotate(135deg);
+  }
+}

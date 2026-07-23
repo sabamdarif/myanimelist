@@ -1,18 +1,52 @@
+import hashlib
+import json
 import secrets
 
+from allauth.account.models import EmailAddress
+from allauth.socialaccount.models import SocialAccount
 from django.db import transaction
-from django.db.models import Max
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from core.models import Anime, Category, Season, ShareLink
 
 from .serializers import AnimeSerializer, CategorySerializer, SearchAnimeSerializer
+
+SEARCH_RESULT_LIMIT = 15
+
+
+def _next_anime_order(category):
+    """Next free order slot in a category.
+
+    Locks the category's anime rows (select_for_update — no-op on SQLite,
+    real lock on Postgres) so concurrent inserts can't grab the same slot.
+    Caller must be inside a transaction.
+    """
+    orders = Anime.objects.select_for_update().filter(category=category).values_list(
+        "order", flat=True
+    )
+    return max(orders, default=-1) + 1
+
+
+def _next_category_slots(user):
+    """Next free (order, user_category_id) for a user's new category.
+
+    Same locking rules as _next_anime_order. The (user, user_category_id)
+    unique constraint backstops the empty-table phantom race.
+    """
+    rows = Category.objects.select_for_update().filter(user=user).values_list(
+        "order", "user_category_id"
+    )
+    rows = list(rows)
+    next_order = max((o for o, _ in rows), default=-1) + 1
+    next_ucid = max((u for _, u in rows), default=0) + 1
+    return next_order, next_ucid
 
 
 def _reindex_anime_order(category):
@@ -29,6 +63,41 @@ def _reindex_anime_order(category):
             Anime.objects.bulk_update(updates, ["order"])
 
 
+def _reindex_category_order(user):
+    """Re-assign order = 0, 1, 2, … for all of a user's categories using bulk_update."""
+    siblings = Category.objects.filter(user=user).order_by("order", "pk")
+    updates = []
+    for idx, cat in enumerate(siblings):
+        if cat.order != idx:
+            cat.order = idx
+            updates.append(cat)
+
+    if updates:
+        Category.objects.bulk_update(updates, ["order"])
+
+
+class MeApiView(APIView):
+    """Auth state for the app shell header."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        social = SocialAccount.objects.filter(user=user).first()
+        avatar_url = (social.get_avatar_url() if social else None) or ""
+        return Response(
+            {
+                "username": user.username,
+                "name": user.get_full_name() or user.username,
+                "email": user.email,
+                "avatar_url": avatar_url,
+                "email_verified": EmailAddress.objects.filter(
+                    user=user, verified=True
+                ).exists(),
+            }
+        )
+
+
 class CategoryListCreateApiView(generics.ListCreateAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
@@ -38,14 +107,11 @@ class CategoryListCreateApiView(generics.ListCreateAPIView):
         return super().get_queryset().filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        qs = Category.objects.filter(user=self.request.user)
-        max_order = qs.aggregate(m=Max("order"))["m"]
-        next_order = (max_order + 1) if max_order is not None else 0
-        max_ucid = qs.aggregate(m=Max("user_category_id"))["m"]
-        next_ucid = (max_ucid + 1) if max_ucid is not None else 1
-        serializer.save(
-            user=self.request.user, order=next_order, user_category_id=next_ucid
-        )
+        with transaction.atomic():
+            next_order, next_ucid = _next_category_slots(self.request.user)
+            serializer.save(
+                user=self.request.user, order=next_order, user_category_id=next_ucid
+            )
 
 
 class CategoryDetailApiView(generics.RetrieveUpdateDestroyAPIView):
@@ -60,12 +126,9 @@ class CategoryDetailApiView(generics.RetrieveUpdateDestroyAPIView):
 
     def perform_destroy(self, instance):
         user = instance.user
-        instance.delete()
-        # Re-index category order after deletion
-        siblings = Category.objects.filter(user=user).order_by("order", "pk")
-        for idx, cat in enumerate(siblings):
-            if cat.order != idx:
-                Category.objects.filter(pk=cat.pk).update(order=idx)
+        with transaction.atomic():
+            instance.delete()
+            _reindex_category_order(user)
 
 
 class AnimeListCreateApiView(generics.ListCreateAPIView):
@@ -90,11 +153,8 @@ class AnimeListCreateApiView(generics.ListCreateAPIView):
             user=self.request.user,
         )
         # Place new anime at the end of the list
-        max_order = Anime.objects.filter(category=category).aggregate(m=Max("order"))[
-            "m"
-        ]
-        next_order = (max_order + 1) if max_order is not None else 0
-        serializer.save(category=category, order=next_order)
+        with transaction.atomic():
+            serializer.save(category=category, order=_next_anime_order(category))
 
 
 class AnimeDetailApiView(generics.RetrieveUpdateDestroyAPIView):
@@ -126,14 +186,11 @@ class AnimeDetailApiView(generics.RetrieveUpdateDestroyAPIView):
                 user=self.request.user,
             )
             # Add to the end of the new category
-            max_order_agg = Anime.objects.filter(category=new_category).aggregate(
-                m=Max("order")
-            )
-            max_order = max_order_agg.get("m")
-            next_order = (max_order + 1) if max_order is not None else 0
-
-            serializer.save(category=new_category, order=next_order)
-            _reindex_anime_order(old_category)
+            with transaction.atomic():
+                serializer.save(
+                    category=new_category, order=_next_anime_order(new_category)
+                )
+                _reindex_anime_order(old_category)
         else:
             serializer.save()
 
@@ -223,18 +280,23 @@ class CategoryReorderApiView(APIView):
 
 
 class SearchAnimeApiView(generics.ListAPIView):
-    """Return all anime across all categories for the authenticated user.
+    """Search the authenticated user's anime by name.
 
-    Used by the client-side search index — called once on page load.
+    With ?q= : icontains filter, max SEARCH_RESULT_LIMIT rows.
+    Without ?q= : full list (legacy client-side search index — remove in phase 10).
     """
 
-    queryset = Anime.objects.select_related("category")
+    queryset = Anime.objects.select_related("category").prefetch_related("seasons")
     serializer_class = SearchAnimeSerializer
     permission_classes = [IsAuthenticated]
-    pagination_class = None  # Return everything in one response
+    pagination_class = None
 
     def get_queryset(self):
-        return super().get_queryset().filter(category__user=self.request.user)
+        qs = super().get_queryset().filter(category__user=self.request.user)
+        q = (self.request.query_params.get("q") or "").strip()
+        if q:
+            qs = qs.filter(name__icontains=q)[:SEARCH_RESULT_LIMIT]
+        return qs
 
 
 class AnimeBulkSyncApiView(APIView):
@@ -249,9 +311,16 @@ class AnimeBulkSyncApiView(APIView):
             )
 
         created_ids = {}
+        errors = []
         categories_to_reindex = set()
 
-        for action in actions:
+        def fail(index, action_type, detail):
+            errors.append({"index": index, "type": action_type, "detail": detail})
+
+        def get_category(ucid):
+            return Category.objects.get(user_category_id=ucid, user=request.user)
+
+        for index, action in enumerate(actions):
             action_type = action.get("type")
             temp_id = action.get("temp_id")
             data = action.get("data", {})
@@ -260,76 +329,93 @@ class AnimeBulkSyncApiView(APIView):
             if action_type == "CREATE":
                 category_id = data.get("category_id")
                 if not category_id:
+                    fail(index, action_type, "data.category_id is required")
                     continue
-                category = get_object_or_404(
-                    Category, user_category_id=category_id, user=request.user
-                )
-
-                max_order = Anime.objects.filter(category=category).aggregate(
-                    m=Max("order")
-                )["m"]
-                next_order = (max_order + 1) if max_order is not None else 0
+                try:
+                    category = get_category(category_id)
+                except Category.DoesNotExist:
+                    fail(index, action_type, f"Category {category_id} not found")
+                    continue
 
                 serializer = AnimeSerializer(data=data)
-                if serializer.is_valid():
-                    anime = serializer.save(category=category, order=next_order)
-                    if temp_id:
-                        created_ids[temp_id] = anime.id
+                if not serializer.is_valid():
+                    fail(index, action_type, serializer.errors)
+                    continue
+                anime = serializer.save(
+                    category=category, order=_next_anime_order(category)
+                )
+                if temp_id:
+                    created_ids[temp_id] = anime.id
 
             elif action_type == "UPDATE":
                 if real_id is None and temp_id in created_ids:
                     real_id = created_ids[temp_id]
 
                 if real_id is None:
+                    fail(index, action_type, "no id or resolvable temp_id")
                     continue
 
                 try:
                     anime = Anime.objects.get(id=real_id, category__user=request.user)
                 except Anime.DoesNotExist:
+                    fail(index, action_type, f"Anime {real_id} not found")
                     continue
 
                 old_category = anime.category
                 new_category_id = data.get("category_id")
 
                 serializer = AnimeSerializer(anime, data=data, partial=True)
-                if serializer.is_valid():
-                    if new_category_id is not None and str(new_category_id) != str(
-                        old_category.user_category_id
-                    ):
-                        new_category = get_object_or_404(
-                            Category,
-                            user_category_id=new_category_id,
-                            user=request.user,
+                if not serializer.is_valid():
+                    fail(index, action_type, serializer.errors)
+                    continue
+
+                if new_category_id is not None and str(new_category_id) != str(
+                    old_category.user_category_id
+                ):
+                    try:
+                        new_category = get_category(new_category_id)
+                    except Category.DoesNotExist:
+                        fail(
+                            index, action_type, f"Category {new_category_id} not found"
                         )
-                        max_order = Anime.objects.filter(
-                            category=new_category
-                        ).aggregate(m=Max("order"))["m"]
-                        next_order = (max_order + 1) if max_order is not None else 0
-                        serializer.save(category=new_category, order=next_order)
-                        categories_to_reindex.add(old_category)
-                    else:
-                        serializer.save()
+                        continue
+                    serializer.save(
+                        category=new_category, order=_next_anime_order(new_category)
+                    )
+                    categories_to_reindex.add(old_category)
+                else:
+                    serializer.save()
 
             elif action_type == "DELETE":
                 if real_id is None and temp_id in created_ids:
                     real_id = created_ids[temp_id]
 
-                if real_id is not None:
-                    try:
-                        anime = Anime.objects.get(
-                            id=real_id, category__user=request.user
-                        )
-                        category = anime.category
-                        anime.delete()
-                        categories_to_reindex.add(category)
-                    except Anime.DoesNotExist:
-                        # Anime was already deleted or doesn't exist, safely ignore
-                        pass
+                if real_id is None:
+                    fail(index, action_type, "no id or resolvable temp_id")
+                    continue
+
+                try:
+                    anime = Anime.objects.get(id=real_id, category__user=request.user)
+                    category = anime.category
+                    anime.delete()
+                    categories_to_reindex.add(category)
+                except Anime.DoesNotExist:
+                    # Anime was already deleted or doesn't exist, safely ignore
+                    pass
+
+            else:
+                fail(index, action_type, f"unknown action type: {action_type!r}")
 
         for category in categories_to_reindex:
             _reindex_anime_order(category)
 
-        return Response({"status": "ok", "created_ids": created_ids})
+        return Response(
+            {
+                "status": "partial" if errors else "ok",
+                "created_ids": created_ids,
+                "errors": errors,
+            }
+        )
 
 
 def _generate_share_token() -> str:
@@ -375,6 +461,9 @@ class ShareManageApiView(APIView):
 
 
 class ShareDataApiView(APIView):
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "share_data"
+
     def get(self, request, token):
         try:
             share = ShareLink.objects.select_related("user").get(token=token)
@@ -400,7 +489,21 @@ class ShareDataApiView(APIView):
             for cat in categories
         ]
 
-        return Response(data, status=status.HTTP_200_OK)
+        etag = (
+            '"'
+            + hashlib.md5(
+                json.dumps(data, sort_keys=True, default=str).encode()
+            ).hexdigest()
+            + '"'
+        )
+        if request.headers.get("If-None-Match") == etag:
+            response = Response(status=status.HTTP_304_NOT_MODIFIED)
+        else:
+            response = Response(data, status=status.HTTP_200_OK)
+        response["ETag"] = etag
+        response["Cache-Control"] = "public, max-age=60"
+        response["X-Share-Owner"] = owner.get_full_name() or owner.username
+        return response
 
 
 class ShareCopyApiView(APIView):
@@ -437,13 +540,7 @@ class ShareCopyApiView(APIView):
                     user=target_user, name=o_cat.name
                 ).first()
                 if not t_cat:
-                    # Create new category with sequentially generated user_category_id and order
-                    qs = Category.objects.filter(user=target_user)
-                    max_order = qs.aggregate(m=Max("order"))["m"]
-                    next_order = (max_order + 1) if max_order is not None else 0
-                    max_ucid = qs.aggregate(m=Max("user_category_id"))["m"]
-                    next_ucid = (max_ucid + 1) if max_ucid is not None else 1
-
+                    next_order, next_ucid = _next_category_slots(target_user)
                     t_cat = Category.objects.create(
                         user=target_user,
                         name=o_cat.name,
@@ -456,42 +553,42 @@ class ShareCopyApiView(APIView):
                     Anime.objects.filter(category=t_cat).values_list("name", flat=True)
                 )
 
-                # Setup ordering base for any newly created anime
-                max_anime_order = Anime.objects.filter(category=t_cat).aggregate(
-                    m=Max("order")
-                )["m"]
-                next_anime_order = (
-                    (max_anime_order + 1) if max_anime_order is not None else 0
-                )
+                next_anime_order = _next_anime_order(t_cat)
 
+                # (source, copy) pairs so seasons can be attached after bulk_create
+                pairs = []
                 for o_ani in o_cat.animes.all():
                     if o_ani.name in existing_anime_names:
                         continue
-
-                    t_ani = Anime.objects.create(
-                        category=t_cat,
-                        name=o_ani.name,
-                        thumbnail_url=o_ani.thumbnail_url,
-                        language=o_ani.language,
-                        stars=o_ani.stars,
-                        order=next_anime_order,
+                    pairs.append(
+                        (
+                            o_ani,
+                            Anime(
+                                category=t_cat,
+                                name=o_ani.name,
+                                thumbnail_url=o_ani.thumbnail_url,
+                                language=o_ani.language,
+                                stars=o_ani.stars,
+                                order=next_anime_order,
+                            ),
+                        )
                     )
                     next_anime_order += 1
 
-                    # Copy seasons in bulk
-                    seasons_to_create = []
-                    for o_season in o_ani.seasons.all():
-                        seasons_to_create.append(
-                            Season(
-                                anime=t_ani,
-                                number=o_season.number,
-                                total_episodes=o_season.total_episodes,
-                                watched_episodes=o_season.watched_episodes,
-                                comment=o_season.comment,
-                            )
-                        )
-                    if seasons_to_create:
-                        Season.objects.bulk_create(seasons_to_create)
+                Anime.objects.bulk_create([copy for _, copy in pairs])
+                seasons_to_create = [
+                    Season(
+                        anime=copy,
+                        number=o_season.number,
+                        total_episodes=o_season.total_episodes,
+                        watched_episodes=o_season.watched_episodes,
+                        comment=o_season.comment,
+                    )
+                    for o_ani, copy in pairs
+                    for o_season in o_ani.seasons.all()
+                ]
+                if seasons_to_create:
+                    Season.objects.bulk_create(seasons_to_create)
 
         return Response(
             {"status": "ok", "detail": "List copied successfully!"},

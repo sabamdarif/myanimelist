@@ -17,13 +17,20 @@ dependencies = [
     "psycopg[binary]>=3.2.0",
     "pyjwt>=2.12.1",
     "python-dotenv>=1.2.2",
+    "redis>=5.0",
     "requests>=2.32.5",
     "whitenoise>=6.8.0",
 ]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "AniListShare.settings"
+python_files = ["test_*.py"]
 
 [dependency-groups]
 dev = [
     "django-browser-reload>=1.21.0",
     "django-silk>=5.5.0",
     "fonttools[woff]>=4.60.0",
+    "pytest>=9.1.1",
+    "pytest-django>=4.12.0",
 ]

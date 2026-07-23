@@ -7,6 +7,7 @@ from rest_framework_simplejwt.views import (
 from . import views
 
 urlpatterns = [
+    path("v1/me/", views.MeApiView.as_view(), name="me"),
     path(
         "v1/categories/",
         views.CategoryListCreateApiView.as_view(),

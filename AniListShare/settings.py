@@ -233,7 +233,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = "static/"
+# "django-static/" so the Next.js proxy can route Django assets distinctly from
+# Next's own /static namespace ({% static %} templates pick this up automatically)
+STATIC_URL = "django-static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 if not DEBUG:
@@ -241,6 +243,17 @@ if not DEBUG:
         "staticfiles": {
             "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
         },
+    }
+
+# Cache — Redis when REDIS_URL is set (shared across gunicorn workers, so DRF
+# throttles actually work); default LocMem otherwise.
+REDIS_URL = os.getenv("REDIS_URL", "")
+if REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": REDIS_URL,
+        }
     }
 
 # Django REST Framework
@@ -258,6 +271,9 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": "100/day",
         "user": "5000/day",
+        # Public share data has its own (higher) bucket so a popular link
+        # doesn't exhaust the global anon rate.
+        "share_data": "60/min",
     },
 }
 

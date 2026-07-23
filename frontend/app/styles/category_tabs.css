@@ -1,0 +1,161 @@
+.category_tabs {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.category_tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.category_tab {
+  position: relative;
+  padding: 12px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+.category_tab.active {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .category_tab {
+    padding: 10px 14px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .category_tab {
+    padding: 9px 10px;
+    font-size: 0.75rem;
+  }
+}
+
+.category_tab_wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0 6px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.category_tab_wrapper:hover {
+  background: var(--surface2);
+}
+
+.category_tab_wrapper:hover .category_tab {
+  color: var(--text);
+}
+
+.category_tab_wrapper::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 75%;
+  height: 2.5px;
+  background: var(--accent);
+  border-radius: 2px 2px 0 0;
+  transition: transform 0.2s ease;
+}
+
+.category_tab_wrapper.active::after {
+  transform: translateX(-50%) scaleX(1);
+}
+
+.category_edit_btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 6px 10px;
+  margin-right: 4px;
+  border-radius: 4px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease;
+  font-size: 0.85rem;
+}
+
+.category_edit_btn:hover {
+  color: var(--accent);
+  background: rgba(128, 128, 128, 0.1);
+  transform: scale(1.1);
+}
+
+.category_edit_btn:active {
+  transform: scale(0.95);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .category_tab_wrapper:hover .category_edit_btn {
+    display: flex;
+    animation: fadeInRight 0.2s ease forwards;
+  }
+}
+
+/* Mobile: toggle via JS click */
+.category_tab_wrapper.category_edit_visible .category_edit_btn {
+  display: flex;
+  animation: fadeInRight 0.2s ease forwards;
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ── Category drag ghost ── */
+.cat_drag_ghost {
+  position: fixed !important;
+  z-index: 10000;
+  pointer-events: none;
+  opacity: 0.9;
+  background: var(--surface);
+  box-shadow:
+    0 6px 24px rgba(0, 0, 0, 0.3),
+    0 0 0 2px var(--accent);
+  border-radius: 8px;
+  transform: scale(1.05);
+}
+
+.cat_dragging {
+  opacity: 0.3 !important;
+}
+
+.cat_drop_indicator {
+  width: 3px;
+  align-self: stretch;
+  background: var(--accent);
+  border-radius: 2px;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px var(--accent);
+  margin: 4px 0;
+}

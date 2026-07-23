@@ -1,0 +1,161 @@
+/* ───────── Add Category Modal ───────── */
+.acm_overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: var(--overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.acm_overlay.acm_visible {
+  opacity: 1;
+}
+
+.acm_card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: translateY(20px) scale(0.97);
+  transition:
+    transform 0.25s ease,
+    opacity 0.25s ease;
+}
+
+.acm_visible .acm_card {
+  transform: translateY(0) scale(1);
+}
+
+.acm_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px 14px;
+}
+
+.acm_title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.acm_close_btn {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.acm_close_btn:hover {
+  background: var(--surface2);
+  color: var(--text);
+}
+
+.acm_body {
+  padding: 0 22px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.acm_section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.acm_label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.acm_name_input {
+  width: 100%;
+  font-family: inherit;
+  font-size: 0.92rem;
+  padding: 11px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.acm_name_input::placeholder {
+  color: var(--text-muted);
+}
+
+.acm_name_input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.acm_footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 22px;
+  border-top: 1px solid var(--border);
+}
+
+.acm_error {
+  font-size: 0.82rem;
+  color: var(--danger);
+  flex: 1;
+}
+
+.acm_cancel_btn {
+  padding: 8px 22px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.acm_cancel_btn:hover {
+  background: var(--surface2);
+}
+
+.acm_save_btn {
+  padding: 8px 22px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  cursor: pointer;
+  transition: opacity 0.12s;
+}
+
+.acm_save_btn:hover {
+  opacity: 0.9;
+}
+
+.acm_save_btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
