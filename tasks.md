@@ -51,10 +51,10 @@
 - [x] Public share page `/share/[token]` (read-only table, copy-list flow)
 - [x] ODS import/export (lazy SheetJS, export ring, import modal)
 
-## Phase 8 — Tests + CI ⬜
-- [ ] Backend pytest suite green
-- [ ] Frontend vitest suite (filters, search nav, mutations, reorder)
-- [ ] `.github/workflows/ci.yml` (backend + frontend jobs, push + PR)
+## Phase 8 — Tests + CI ✅
+- [x] Backend pytest suite green
+- [x] Frontend vitest suite (filters, search nav, mutations, reorder)
+- [x] `.github/workflows/ci.yml` (backend + frontend jobs, push + PR)
 
 ## Phase 9 — Docker ⬜
 - [ ] Backend Dockerfile (gunicorn, non-root, multi-stage)
