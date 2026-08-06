@@ -1,4 +1,48 @@
-db.sqlite3
+# Local configuration and data
+.env
+.env.*
+!.env.example
+*.sqlite3
 settings.json
-/.env
-/*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.pyright/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Django generated output
+staticfiles/*
+!staticfiles/.gitkeep
+
+# Next.js / Node generated output
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/coverage/
+frontend/tsconfig.tsbuildinfo
+frontend/.eslintcache
+
+# Local tooling
+.workbuddy-ai/
+.vscode/
+.idea/
+*.log
+
+# OS/editor artifacts
+.DS_Store
+Thumbs.db
+*~
+*.swp
+*.swo
