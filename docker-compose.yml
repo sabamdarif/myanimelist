@@ -1,0 +1,48 @@
+# Self-hosting stack. One entry port (HTTP_PORT, default 8080) served by nginx,
+# which routes /api, /accounts and /django-static to Django and the rest to Next.
+#
+# External-DB mode (Neon etc.): set DATABASE_URL + DB_SSL_REQUIRE in .env and
+# start without the bundled db:  docker compose up backend frontend nginx
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: anilistshare
+      POSTGRES_USER: anilistshare
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U anilistshare"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://anilistshare:${POSTGRES_PASSWORD:-}@db:5432/anilistshare}
+      DB_SSL_REQUIRE: ${DB_SSL_REQUIRE:-False}
+      DEBUG_MODE: "False"
+    depends_on:
+      db:
+        condition: service_healthy
+        required: false
+
+  frontend:
+    build: ./frontend
+
+  nginx:
+    image: nginx:alpine
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  pgdata:

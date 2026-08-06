@@ -56,13 +56,13 @@
 - [x] Frontend vitest suite (filters, search nav, mutations, reorder)
 - [x] `.github/workflows/ci.yml` (backend + frontend jobs, push + PR)
 
-## Phase 9 — Docker ⬜
-- [ ] Backend Dockerfile (gunicorn, non-root, multi-stage)
-- [ ] Frontend Dockerfile (Next standalone)
-- [ ] docker-compose (postgres + backend + frontend + nginx), external-DB mode
-- [ ] .env.example updated, self-host docs in README
+## Phase 9 — Docker ✅
+- [x] Backend Dockerfile (gunicorn, non-root, multi-stage)
+- [x] Frontend Dockerfile (Next standalone)
+- [x] docker-compose (postgres + backend + frontend + nginx), external-DB mode
+- [x] .env.example updated, self-host docs in README
 
-## Phase 10 — Cleanup ⬜
-- [ ] Delete replaced Jinja templates / static JS / CSS
+## Phase 10 — Cleanup 🔄
+- [x] Delete replaced Jinja templates / static JS / CSS
 - [ ] Final UI parity pass vs screenshots
-- [ ] Update README
+- [x] Update README
