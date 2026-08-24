@@ -140,7 +140,10 @@ if os.getenv("DATABASE_URL") and not DEBUG:
             default=os.getenv("DATABASE_URL"),
             conn_max_age=600,
             conn_health_checks=True,
-            ssl_require=True,
+            # off for the docker-compose postgres (no TLS on the internal
+            # network); leave the default for managed Postgres (Neon etc.)
+            ssl_require=os.getenv("DB_SSL_REQUIRE", "True").lower()
+            in ("true", "1", "yes"),
         )
     }
 else:
@@ -196,7 +199,7 @@ SOCIALACCOUNT_PROVIDERS = {
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 
 LOGIN_URL = "/accounts/login"
-LOGIN_REDIRECT_URL = "list_view"
+LOGIN_REDIRECT_URL = "/list"
 LOGOUT_REDIRECT_URL = "/accounts/login"
 ACCOUNT_SIGNUP_FIELDS = [
     "username*",
@@ -233,7 +236,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = "static/"
+# "django-static/" so the Next.js proxy can route Django assets distinctly from
+# Next's own /static namespace ({% static %} templates pick this up automatically)
+STATIC_URL = "/django-static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 if not DEBUG:
@@ -241,6 +246,17 @@ if not DEBUG:
         "staticfiles": {
             "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
         },
+    }
+
+# Cache — Redis when REDIS_URL is set (shared across gunicorn workers, so DRF
+# throttles actually work); default LocMem otherwise.
+REDIS_URL = os.getenv("REDIS_URL", "")
+if REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": REDIS_URL,
+        }
     }
 
 # Django REST Framework
@@ -258,6 +274,9 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": "100/day",
         "user": "5000/day",
+        # Public share data has its own (higher) bucket so a popular link
+        # doesn't exhaust the global anon rate.
+        "share_data": "60/min",
     },
 }
 
@@ -282,15 +301,18 @@ CSRF_TRUSTED_ORIGINS = [
 
 # ─── Production security settings ───────────────────────────────────────
 if not DEBUG:
-    SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "True").lower() in (
+    # SECURE_SSL_REDIRECT=False means the site is reachable over plain HTTP
+    # (e.g. self-hosted on a LAN) — secure-only cookies would break login there.
+    _HTTPS = os.getenv("SECURE_SSL_REDIRECT", "True").lower() in (
         "true",
         "1",
         "yes",
     )
+    SECURE_SSL_REDIRECT = _HTTPS
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SESSION_COOKIE_SECURE = _HTTPS
+    CSRF_COOKIE_SECURE = _HTTPS
+    SECURE_HSTS_SECONDS = 31536000 if _HTTPS else 0  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SECURE_CONTENT_TYPE_NOSNIFF = True

@@ -1,0 +1,9 @@
+.git
+.venv
+.env
+frontend
+staticfiles
+db.sqlite3
+**/__pycache__
+.claude
+nginx
