@@ -23,7 +23,7 @@ dependencies = [
 ]
 
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "AniListShare.settings"
+DJANGO_SETTINGS_MODULE = "AniListShare.settings_test"
 python_files = ["test_*.py"]
 
 [dependency-groups]

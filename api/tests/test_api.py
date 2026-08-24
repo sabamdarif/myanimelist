@@ -74,7 +74,8 @@ def test_category_create_assigns_sequential_ids(client):
 def test_category_delete_reindexes_orders(client, user):
     for i, name in enumerate(["a", "b", "c"]):
         make_category(user, name=name, order=i, ucid=i + 1)
-    assert client.delete("/api/v1/categories/2/").status_code == 204
+    deleted = client.delete("/api/v1/categories/2/")
+    assert deleted.status_code == 204
     remaining = list(
         Category.objects.filter(user=user).order_by("order").values_list(
             "name", "order"
@@ -120,9 +121,8 @@ def test_anime_update_and_delete(client, user):
     assert resp.status_code == 200
     assert resp.json()["stars"] == 8.5
 
-    assert (
-        client.delete(f"/api/v1/categories/1/animes/{anime.id}/").status_code == 204
-    )
+    deleted = client.delete(f"/api/v1/categories/1/animes/{anime.id}/")
+    assert deleted.status_code == 204
     # remaining anime re-indexed to order 0
     assert list(cat.animes.values_list("name", "order")) == [("Bleach", 0)]
 
@@ -270,7 +270,8 @@ def test_share_enable_data_etag_disable(client, user, anon_client):
 
     assert anon_client.get(data_url, HTTP_IF_NONE_MATCH=etag).status_code == 304
 
-    assert client.delete("/api/v1/share/").status_code == 200
+    disabled = client.delete("/api/v1/share/")
+    assert disabled.status_code == 200
     assert anon_client.get(data_url).status_code == 404
 
 
